@@ -34,10 +34,11 @@
 #
 #   include RELEASE-VERSION
 
-__all__ = ("get_git_version")
+__all__ = ("get_git_version", "get_version")
 
 import os.path
 VERSIONFILE = os.path.join(os.path.dirname(__file__), 'VERSION')
+PROJECTDIR = os.path.dirname(os.path.dirname(os.path.realpath(__file__)))
 
 try:
     from subprocess import Popen, PIPE
@@ -113,6 +114,28 @@ def get_git_version(abbrev=4):
 
     return version
 
+def get_bzr_version():
+    release_version = read_release_version()
+    if 'dev' in release_version:
+        return release_version.replace('dev',
+                Popen(['bzr', 'revno'],
+                    stdout = PIPE,
+                    cwd = PROJECTDIR,
+                    ).communicate()[0].strip()
+                )
+    else:
+        return release_version
+
+def get_version():
+    git_dir = os.path.join(PROJECTDIR, '.git')
+    bzr_dir = os.path.join(PROJECTDIR, '.bzr')
+    if os.path.exists(git_dir):
+        return get_git_version()
+    elif os.path.exists(bzr_dir):
+        return get_bzr_version()
+    else:
+        return read_release_version()
 
 if __name__ == "__main__":
+    print (get_version())
     print (get_git_version())
