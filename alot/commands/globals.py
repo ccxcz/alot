@@ -149,6 +149,9 @@ class ExternalCommand(Command):
     def apply(self, ui):
         callerbuffer = ui.current_buffer
 
+        if self.path is None and ui.mode == 'thread':
+            self.path = ui.current_buffer.get_selected_message().get_filename()
+
         def afterwards(data):
             if data == 'success':
                 if callable(self.on_success):
