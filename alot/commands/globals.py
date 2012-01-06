@@ -148,18 +148,28 @@ class ExternalCommand(Command):
 
     def apply(self, ui):
         callerbuffer = ui.current_buffer
+        env = dict(os.environ)
 
         if ui.mode == 'thread':
             msg = ui.current_buffer.get_selected_message()
-            env = dict(os.environ,
+            # reload message because it's now read and the filename changed
+            msg = ui.dbman.get_message( msg.get_message_id() )
+
+            env.update(
                 MSG_PATH = msg.get_filename(),
                 MSG_ID = msg.get_message_id(),
-                THREAD_ID = msg.get_thread_id(),
+                MSG_TAGS = ' '.join(msg.get_tags()),
                 )
-        elif ui.mode == 'search':
+
+        if ui.mode in ('thread', 'search'):
             thread = ui.current_buffer.get_selected_thread()
-            env = dict(os.environ,
+
+            env.update(
                 THREAD_ID = thread.get_thread_id(),
+                THREAD_TAGS = ' '.join(thread.get_tags()),
+                THREAD_FILES = '\n'.join([
+                    msg.get_filename() for msg in thread.get_messages().keys()
+                    ]),
                 )
 
         def afterwards(data):
