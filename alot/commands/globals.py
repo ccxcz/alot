@@ -179,7 +179,7 @@ class ExternalCommand(Command):
             cmd = cmd.encode('utf-8', errors='ignore')
             ui.logger.info('calling external command: %s' % cmd)
             try:
-                if 0 == subprocess.call(shlex.split(cmd)):
+                if 0 == subprocess.call(cmd, shell=True):
                     os.write(write_fd, 'success')
             except OSError, e:
                 os.write(write_fd, str(e))
