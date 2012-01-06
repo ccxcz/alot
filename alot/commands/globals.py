@@ -149,8 +149,18 @@ class ExternalCommand(Command):
     def apply(self, ui):
         callerbuffer = ui.current_buffer
 
-        if self.path is None and ui.mode == 'thread':
-            self.path = ui.current_buffer.get_selected_message().get_filename()
+        if ui.mode == 'thread':
+            msg = ui.current_buffer.get_selected_message()
+            env = dict(os.environ,
+                MSG_PATH = msg.get_filename(),
+                MSG_ID = msg.get_message_id(),
+                THREAD_ID = msg.get_thread_id(),
+                )
+        elif ui.mode == 'search':
+            thread = ui.current_buffer.get_selected_thread()
+            env = dict(os.environ,
+                THREAD_ID = thread.get_thread_id(),
+                )
 
         def afterwards(data):
             if data == 'success':
@@ -182,7 +192,7 @@ class ExternalCommand(Command):
             cmd = cmd.encode('utf-8', errors='ignore')
             ui.logger.info('calling external command: %s' % cmd)
             try:
-                if 0 == subprocess.call(cmd, shell=True):
+                if 0 == subprocess.call(cmd, shell=True, env=env):
                     os.write(write_fd, 'success')
             except OSError, e:
                 os.write(write_fd, str(e))
